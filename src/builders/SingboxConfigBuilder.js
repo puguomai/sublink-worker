@@ -13,6 +13,28 @@ const ANYTLS_OPTION_KEYS = {
     'min-idle-session': 'min_idle_session'
 };
 
+// sing-box types Shadowsocks plugin_opts as a string, while Clash carries it
+// as an object — passing the object through makes sing-box reject the whole
+// config ("cannot unmarshal object into Go value of type string").
+const OBFS_PLUGIN_OPT_KEYS = {
+    mode: 'obfs',
+    host: 'obfs-host',
+    path: 'obfs-uri'
+};
+
+function stringifyPluginOpts(plugin, pluginOpts) {
+    if (typeof pluginOpts === 'string' || pluginOpts == null) return pluginOpts;
+    if (typeof pluginOpts !== 'object') return undefined;
+    const keyMap = plugin === 'obfs' ? OBFS_PLUGIN_OPT_KEYS : null;
+    const parts = [];
+    for (const [key, value] of Object.entries(pluginOpts)) {
+        if (value === undefined || value === null || value === false) continue;
+        const name = keyMap?.[key] ?? key;
+        parts.push(value === true ? name : `${name}=${value}`);
+    }
+    return parts.length > 0 ? parts.join(';') : undefined;
+}
+
 function isDirectDnsServer(server, outbounds = []) {
     if (!server?.tag || server.type === 'fakeip') return false;
     if (!server.detour) return true;
@@ -94,6 +116,11 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
         // Remove packet_encoding for now - it's version-specific in sing-box
         // xudp is default in newer versions
         delete sanitized.packet_encoding;
+
+        // sing-box requires plugin_opts to be a string; serialize Clash-style objects
+        if (sanitized.plugin_opts !== undefined) {
+            sanitized.plugin_opts = stringifyPluginOpts(sanitized.plugin, sanitized.plugin_opts);
+        }
 
         if (sanitized.type === 'hysteria2') {
             // sing-box names port-hopping/bandwidth fields differently from the
