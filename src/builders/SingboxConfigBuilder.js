@@ -72,6 +72,18 @@ export class SingboxConfigBuilder extends BaseConfigBuilder {
     }
 
     convertProxy(proxy) {
+        // sing-box has no xhttp transport in any version — a single xhttp
+        // outbound makes sing-box reject the whole config ("unknown
+        // transport type: xhttp"). Drop the node instead of emitting it;
+        // never rewrite xhttp to ws, the wire protocol differs and the node
+        // would fail to connect. Xray-core clients still get these nodes
+        // from the Clash output, which is untouched. Returning null also
+        // keeps the node out of every selector/urltest group, since groups
+        // are built from the outbounds added here.
+        if (proxy?.transport?.type === 'xhttp' || proxy?.network === 'xhttp') {
+            return null;
+        }
+
         // Create a shallow copy to avoid mutating the original
         const sanitized = { ...proxy };
 
