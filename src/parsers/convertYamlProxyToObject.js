@@ -116,7 +116,7 @@ export function convertYamlProxyToObject(p) {
                 tcp_fast_open: typeof p['fast-open'] !== 'undefined' ? !!p['fast-open'] : false,
                 tls,
                 transport,
-                network: transport?.type || 'tcp',
+                network: transport?.type || p.network || 'tcp',
                 flow: p.flow ?? undefined,
                 udp: typeof p.udp !== 'undefined' ? !!p.udp : undefined,
                 packet_encoding: p['packet-encoding'],
