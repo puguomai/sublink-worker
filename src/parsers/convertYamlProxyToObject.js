@@ -232,6 +232,17 @@ export function convertYamlProxyToObject(p) {
                 disable_sni: typeof p['disable-sni'] !== 'undefined' ? !!p['disable-sni'] : undefined
             };
         }
+        case 'socks':
+            return {
+                tag: name,
+                type: 'socks',
+                server: p.server,
+                server_port: parseInt(p.port),
+                username: p.username,
+                password: p.password,
+                version: '5',
+                udp: typeof p.udp !== 'undefined' ? !!p.udp : undefined
+            };
         case 'anytls': {
             const tls = {
                 enabled: true,
